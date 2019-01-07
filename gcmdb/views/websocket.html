@@ -1,0 +1,95 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>gcmdb websocket </title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim 和 Respond.js 是为了让 IE8 支持 HTML5 元素和媒体查询（media queries）功能 -->
+    <!-- 警告：通过 file:// 协议（就是直接将 html 页面拖拽到浏览器中）访问页面时 Respond.js 不起作用 -->
+    <!--[if lt IE 9]>
+    <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+    <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<div class="container-fluid">
+    <h3>Task任务执行状态</h3>
+    <table class="table" id="task">
+        <!-- On cells (`td` or `th`) -->
+        <tr>
+            <td class="active 127.0.0.1" ><p>主机<p></td>
+            <td class="success">状态</td>
+            <td class="info">信息</td>
+            <td class="warning">时间</td>
+        </tr>
+
+    </table>
+    <h3>主机列表</h3>
+    <table class="table" id="log">
+        <!-- On cells (`td` or `th`) -->
+
+
+    </table>
+</div>
+
+
+<!-- jQuery (Bootstrap 的所有 JavaScript 插件都依赖 jQuery，所以必须放在前边) -->
+<script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+<!-- 加载 Bootstrap 的所有 JavaScript 插件。你也可以根据需要只加载单个插件。 -->
+<script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+<script type="text/javascript">
+    $(function() {
+        var conn;
+        var logs = $("#log");
+        var tas = $("#task");
+        var host = window.location.host;
+        function appendLog(msg) {
+            var d = logs[0]
+            var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+            msg.appendTo(logs)
+            if (doScroll) {
+                d.scrollTop = d.scrollHeight - d.clientHeight;
+            }
+        }
+
+        function appendtask(task) {
+            var d = tas[0]
+            var doScroll = d.scrollTop == d.scrollHeight - d.clientHeight;
+            task.appendTo(tas)
+            if (doScroll) {
+                d.scrollTop = d.scrollHeight - d.clientHeight;
+            }
+        }
+
+        if (window["WebSocket"]) {
+            conn = new WebSocket("ws://" + host + "/wss");
+            conn.onclose = function(evt) {
+                appendLog($("<div><b>连接中断，新刷新页面</b></div>"))
+            };
+            conn.onmessage = function(evt) {
+                var result = JSON.parse(evt.data);
+                console.log(result);
+                if (result.active === "CallBackTask" ){
+                    appendtask($("<tr><td class=\"active\" ><p>" + result.Data.ip + "<p></td><td class=\"success\">"  + result.Data.status + "</td><td class=\"info\"><pre>" + result.Data.msg + "</pre></td><td class=\"warning\">" + result.Data.time + "</td></tr>"))
+                }else{
+                    appendLog($("<tr><td class=\"active\" ><p>" + result.Data.ip + "<p></td><td class=\"success\">"  + result.code + "</td><td class=\"info\"><pre>" + result.msg + "</pre></td><td class=\"warning\">" + result.time + "</td></tr>"))
+                }
+            };
+            conn.onopen = function(e) {
+                // appendLog($("<div><b>已连接服务器，等待服务器返回数据</b></div>"))
+                conn.send('{"active": "login"}');
+            }
+        } else {
+            appendLog($("<div><b>Your browser does not support WebSockets.</b></div>"))
+        }
+    });
+</script>
+</body>
+</html>

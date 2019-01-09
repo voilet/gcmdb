@@ -5,3 +5,6 @@
 drop table fun_host;
 drop table fun_equipment_type;
 
+配置文件中新增以下
+# 如域中有此帐户为 True则自动添加到用户表
+AutoCreateUser = false
